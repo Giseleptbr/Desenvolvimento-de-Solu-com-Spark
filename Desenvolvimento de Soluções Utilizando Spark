@@ -1,0 +1,1521 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Giseleptbr/Desenvolvimento-de-Solu-com-Spark/blob/main/Desenvolvimento%20de%20Solu%C3%A7%C3%B5es%20Utilizando%20Spark\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "c53ad676-9111-4855-a256-214ea85009d4",
+      "metadata": {
+        "id": "c53ad676-9111-4855-a256-214ea85009d4",
+        "outputId": "8e0b597c-fb8e-416f-e23d-7cef53e9d735"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "Spark carregado com sucesso...\n"
+          ]
+        }
+      ],
+      "source": [
+        "from pyspark.sql import SparkSession\n",
+        "spark = SparkSession.builder.appName('DesafioMod02').getOrCreate()\n",
+        "print('Spark carregado com sucesso...')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "209c1cfa-5bae-40a5-b932-1be2f187e739",
+      "metadata": {
+        "id": "209c1cfa-5bae-40a5-b932-1be2f187e739",
+        "outputId": "e8208aee-d2e1-48f3-97e8-1e0442f701c5"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+---+------+----+------------+-------------+------------+---------+--------------+-----------------+-----+--------------+------+\n",
+            "|  0|gender| age|hypertension|heart_disease|ever_married|work_type|Residence_type|avg_glucose_level|  bmi|smoking_status|stroke|\n",
+            "+---+------+----+------------+-------------+------------+---------+--------------+-----------------+-----+--------------+------+\n",
+            "|  1|Female|18.0|           0|            0|          No|  Private|         Urban|            94.19|12.12|        smokes|     1|\n",
+            "|  2|  Male|58.0|           1|            0|         Yes|  Private|         Rural|           154.24| 33.7|  never_smoked|     0|\n",
+            "+---+------+----+------------+-------------+------------+---------+--------------+-----------------+-----+--------------+------+\n",
+            "only showing top 2 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "file_location = 'work/Desafio/stroke_data.csv' # work/Desafio/stroke_data.csv\n",
+        "#lendo DataFrame\n",
+        "df = spark.read.csv(file_location, header = True, inferSchema = True)\n",
+        "#exibir 5 linhas do df\n",
+        "df.show(2)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "319ff165-2eda-401d-be3c-1b6087aaa8c1",
+      "metadata": {
+        "id": "319ff165-2eda-401d-be3c-1b6087aaa8c1"
+      },
+      "source": [
+        "# 01-Quantos registros existem no arquivo?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "98e07318-c630-4077-8cc5-5a1431d09eca",
+      "metadata": {
+        "id": "98e07318-c630-4077-8cc5-5a1431d09eca",
+        "outputId": "95485924-d4ef-491a-a326-ef0dfa61b479"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            " \n",
+            " existem 67135 linhas\n"
+          ]
+        }
+      ],
+      "source": [
+        "print(f' \\n existem {df.count()} linhas')\n",
+        "#transformar colunas gender,ever_married, work_type,Residence_type,smoking_status em binario"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "83154492-94dd-41c0-b65d-25e33c6d4d7a",
+      "metadata": {
+        "id": "83154492-94dd-41c0-b65d-25e33c6d4d7a"
+      },
+      "source": [
+        "# 02 - Quantas colunas existem no arquivo? Quantas são numéricas? Ao ler o arquivo com spark.read.csv, habilite inferSchema=True. Use a função printSchema() da API de Dataframes."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "4a11b258-4920-4bbd-a857-a64bf0c99c54",
+      "metadata": {
+        "id": "4a11b258-4920-4bbd-a857-a64bf0c99c54",
+        "outputId": "19abada0-ee5d-484e-929a-d1e74f081c2b"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "root\n",
+            " |-- 0: integer (nullable = true)\n",
+            " |-- gender: string (nullable = true)\n",
+            " |-- age: double (nullable = true)\n",
+            " |-- hypertension: integer (nullable = true)\n",
+            " |-- heart_disease: integer (nullable = true)\n",
+            " |-- ever_married: string (nullable = true)\n",
+            " |-- work_type: string (nullable = true)\n",
+            " |-- Residence_type: string (nullable = true)\n",
+            " |-- avg_glucose_level: double (nullable = true)\n",
+            " |-- bmi: double (nullable = true)\n",
+            " |-- smoking_status: string (nullable = true)\n",
+            " |-- stroke: integer (nullable = true)\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "#imprimindo os schema do df\n",
+        "df.printSchema()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "5642b0bb-d031-44c2-9c5d-3b6417128898",
+      "metadata": {
+        "id": "5642b0bb-d031-44c2-9c5d-3b6417128898"
+      },
+      "source": [
+        "# 03- No conjunto de dados, quantos pacientes sofreram e não sofreram derrame (stroke), respectivamente?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "d23d8368-e2a7-4c2c-911b-bfa1ab0175fa",
+      "metadata": {
+        "id": "d23d8368-e2a7-4c2c-911b-bfa1ab0175fa",
+        "outputId": "ba545799-6d93-4945-c162-a65df0ac5e20"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------+-----+\n",
+            "|stroke|count|\n",
+            "+------+-----+\n",
+            "|     1|40287|\n",
+            "|     0|26848|\n",
+            "+------+-----+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "df.groupBy('stroke').count().show()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "066f9d8a-278d-4b58-ad0e-4e57558ec3a0",
+      "metadata": {
+        "id": "066f9d8a-278d-4b58-ad0e-4e57558ec3a0"
+      },
+      "source": [
+        "# 04 - A partir do dataframe, crie uma tabela temporária usando df.createOrReplaceTempView('table') e a seguir use spark.sql para escrever uma consulta SQL que obtenha quantos pacientes tiveram derrame por tipo de trabalho (work_type). Quantos pacientes sofreram derrame e trabalhavam respectivamente, no setor privado, de forma independente, no governo e quantas são crianças?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "98751c74-a525-4e7d-8cf1-24b701645d65",
+      "metadata": {
+        "id": "98751c74-a525-4e7d-8cf1-24b701645d65"
+      },
+      "outputs": [],
+      "source": [
+        "#criando uma tabela temporaria fonte: https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.createOrReplaceTempView.html?highlight=createorreplacetempview#pyspark.sql.DataFrame.createOrReplaceTempView\n",
+        "df.createOrReplaceTempView('ataque')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "b6c3a938-5d9b-4792-8d7e-c5445732af85",
+      "metadata": {
+        "id": "b6c3a938-5d9b-4792-8d7e-c5445732af85",
+        "outputId": "905cb77d-5301-457a-9716-19bc725df49a"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+-------------+-----------+\n",
+            "|    work_type|sum(stroke)|\n",
+            "+-------------+-----------+\n",
+            "| Never_worked|         85|\n",
+            "|     children|        520|\n",
+            "|     Govt_job|       5164|\n",
+            "|Self-employed|      10807|\n",
+            "|      Private|      23711|\n",
+            "+-------------+-----------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "#criando uma consulta sql\n",
+        "spark.sql(\"SELECT work_type,SUM(stroke) FROM ataque GROUP BY work_type ORDER BY SUM(stroke) \").show()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "8d27ef9b-d6d0-4099-9428-8a8d0fd0bf5f",
+      "metadata": {
+        "id": "8d27ef9b-d6d0-4099-9428-8a8d0fd0bf5f",
+        "outputId": "3cec92a6-5959-428f-9036-719a51cc6c89"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+-------------+-----------+\n",
+            "|    work_type|sum(stroke)|\n",
+            "+-------------+-----------+\n",
+            "| Never_worked|         85|\n",
+            "|     children|        520|\n",
+            "|     Govt_job|       5164|\n",
+            "|Self-employed|      10807|\n",
+            "|      Private|      23711|\n",
+            "+-------------+-----------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "#conferindo...\n",
+        "df.select('work_type','stroke').groupBy('work_type').sum().sort('sum(stroke)').show()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "3a7efc3e-dff2-4c78-bc72-1d6e65597659",
+      "metadata": {
+        "id": "3a7efc3e-dff2-4c78-bc72-1d6e65597659"
+      },
+      "source": [
+        "# 05 - Escreva uma consulta com spark.sql para determinar a proporção, por gênero, de participantes do estudo. A maioria dos participantes é:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "a94aed29-f892-4e87-9298-188ad311291d",
+      "metadata": {
+        "id": "a94aed29-f892-4e87-9298-188ad311291d",
+        "outputId": "af01378a-5a18-487d-b996-5698a3d62305"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------+-------------+\n",
+            "|gender|count(gender)|\n",
+            "+------+-------------+\n",
+            "| Other|           11|\n",
+            "|  Male|        27594|\n",
+            "|Female|        39530|\n",
+            "+------+-------------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "spark.sql(\"SELECT gender, COUNT(gender) FROM ataque GROUP BY gender ORDER BY COUNT(gender) \").show()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "efb47295-5dbd-4643-a8f4-21b458926501",
+      "metadata": {
+        "id": "efb47295-5dbd-4643-a8f4-21b458926501",
+        "outputId": "50776620-14ba-4775-a6a9-8821ec2c68bb"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------+-----+\n",
+            "|gender|count|\n",
+            "+------+-----+\n",
+            "| Other|   11|\n",
+            "|  Male|27594|\n",
+            "|Female|39530|\n",
+            "+------+-----+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "#conferindo\n",
+        "df.select('gender').groupBy('gender').count().sort('count').show()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "e88470ac-2876-4fbf-9c52-f2effae88fce",
+      "metadata": {
+        "id": "e88470ac-2876-4fbf-9c52-f2effae88fce"
+      },
+      "source": [
+        "# 06 ((errado)) - Escreva uma consulta com spark.sql para determinar quem tem mais probabilidade de sofrer derrame: hipertensos ou não-hipertensos. Você pode escrever uma consulta para cada grupo. A partir das probabilidades que você obteve, você conclui que:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "22650da5-c08b-42b7-8b62-821d06b8e61f",
+      "metadata": {
+        "id": "22650da5-c08b-42b7-8b62-821d06b8e61f",
+        "outputId": "90edfab2-1bf3-4be3-84f1-2c6f80d96c39"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------------+-------------------+\n",
+            "|hypertension|count(hypertension)|\n",
+            "+------------+-------------------+\n",
+            "|           1|              11017|\n",
+            "|           0|              56118|\n",
+            "+------------+-------------------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "spark.sql(\"SELECT hypertension, COUNT(hypertension) FROM ataque GROUP BY hypertension \").show()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "4e97fd62-0736-49be-b469-303580626743",
+      "metadata": {
+        "id": "4e97fd62-0736-49be-b469-303580626743",
+        "outputId": "a7c96351-18d8-47c7-bc2e-09c7f1076f85"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------------+-----------------------------+\n",
+            "|hypertension|(count(hypertension) / 67135)|\n",
+            "+------------+-----------------------------+\n",
+            "|           1|          0.16410218217025396|\n",
+            "|           0|            0.835897817829746|\n",
+            "+------------+-----------------------------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "#conferindo...\n",
+        "from pyspark.sql.functions import count\n",
+        "df.select('hypertension').groupBy('hypertension').agg(count('hypertension')/df.count()).show()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "8d38ce3c-7c89-45cc-98fe-0c6915c0f9ce",
+      "metadata": {
+        "id": "8d38ce3c-7c89-45cc-98fe-0c6915c0f9ce"
+      },
+      "source": [
+        "# 07 - Escreva uma consulta com spark.sql que determine o número de pessoas que sofreram derrame por idade. Com qual idade o maior número de pessoas do conjunto de dados sofreu derrame?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "c38941b5-eba1-4092-95ba-45b3c1bb1668",
+      "metadata": {
+        "id": "c38941b5-eba1-4092-95ba-45b3c1bb1668",
+        "outputId": "e1218582-3928-4eea-b24d-ed6116d09c7c"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+----+-----------+\n",
+            "| age|sum(stroke)|\n",
+            "+----+-----------+\n",
+            "|79.0|       2916|\n",
+            "|78.0|       2279|\n",
+            "|80.0|       1858|\n",
+            "|81.0|       1738|\n",
+            "+----+-----------+\n",
+            "only showing top 4 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "spark.sql(\"SELECT age, SUM(stroke) FROM ataque GROUP BY age ORDER BY SUM(stroke) DESC\").show(4)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "fd906e99-2f30-4c33-b846-6a3574b4ebba",
+      "metadata": {
+        "id": "fd906e99-2f30-4c33-b846-6a3574b4ebba"
+      },
+      "source": [
+        "# AQUI A CONSULTA SOMOU DADOS DA IDADE ??????"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "fe4ac03f-a115-4961-84b8-edc4dd7dffe6",
+      "metadata": {
+        "id": "fe4ac03f-a115-4961-84b8-edc4dd7dffe6",
+        "outputId": "2a96fb05-0de5-4e22-d9c1-d5b4dc694067"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+----+-----------+\n",
+            "| age|sum(stroke)|\n",
+            "+----+-----------+\n",
+            "|79.0|       2916|\n",
+            "|78.0|       2279|\n",
+            "|80.0|       1858|\n",
+            "|81.0|       1738|\n",
+            "+----+-----------+\n",
+            "only showing top 4 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "#conferindo\n",
+        "from pyspark.sql.functions import std, desc, avg\n",
+        "df.select('age','stroke').groupBy('age').sum().drop('sum(age)').sort(desc('sum(stroke)')).show(4)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "f3848886-397e-4660-be94-1f4f5d400799",
+      "metadata": {
+        "id": "f3848886-397e-4660-be94-1f4f5d400799"
+      },
+      "source": [
+        "# 08 - Usando a API de dataframes, determine quantas pessoas sofreram derrames após os 50 anos."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "cf0a3837-0a97-4159-9b2f-4a461f162562",
+      "metadata": {
+        "id": "cf0a3837-0a97-4159-9b2f-4a461f162562",
+        "outputId": "19930d9d-e6bf-473c-ea58-d38e44c888da"
+      },
+      "outputs": [
+        {
+          "ename": "TypeError",
+          "evalue": "unsupported operand type(s) for +: 'int' and 'str'",
+          "output_type": "error",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mTypeError\u001b[0m                                 Traceback (most recent call last)",
+            "Cell \u001b[0;32mIn[16], line 1\u001b[0m\n\u001b[0;32m----> 1\u001b[0m df\u001b[38;5;241m.\u001b[39mselect(\u001b[38;5;124m'\u001b[39m\u001b[38;5;124mage\u001b[39m\u001b[38;5;124m'\u001b[39m,\u001b[38;5;124m'\u001b[39m\u001b[38;5;124mstroke\u001b[39m\u001b[38;5;124m'\u001b[39m)\u001b[38;5;241m.\u001b[39mwhere(df[\u001b[38;5;124m'\u001b[39m\u001b[38;5;124mage\u001b[39m\u001b[38;5;124m'\u001b[39m]\u001b[38;5;241m>\u001b[39m\u001b[38;5;241m50\u001b[39m)\u001b[38;5;241m.\u001b[39magg(\u001b[38;5;28;43msum\u001b[39;49m\u001b[43m(\u001b[49m\u001b[38;5;124;43m'\u001b[39;49m\u001b[38;5;124;43mstroke\u001b[39;49m\u001b[38;5;124;43m'\u001b[39;49m\u001b[43m)\u001b[49m)\u001b[38;5;241m.\u001b[39mshow()\n",
+            "\u001b[0;31mTypeError\u001b[0m: unsupported operand type(s) for +: 'int' and 'str'"
+          ]
+        }
+      ],
+      "source": [
+        "df.select('age','stroke').where(df['age']>50).agg(sum('stroke')).show()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "ada35ab3-80f7-46ad-a83c-3300d826ed92",
+      "metadata": {
+        "id": "ada35ab3-80f7-46ad-a83c-3300d826ed92",
+        "outputId": "6fb72cf4-fde5-4348-9a93-e4144495212b"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+----+------+\n",
+            "| age|stroke|\n",
+            "+----+------+\n",
+            "|82.0|     1|\n",
+            "|70.0|     1|\n",
+            "|72.0|     1|\n",
+            "|64.0|     1|\n",
+            "|78.0|     1|\n",
+            "+----+------+\n",
+            "only showing top 5 rows\n",
+            "\n"
+          ]
+        },
+        {
+          "data": {
+            "text/plain": [
+              "28938"
+            ]
+          },
+          "execution_count": 17,
+          "metadata": {},
+          "output_type": "execute_result"
+        }
+      ],
+      "source": [
+        "df.select('age','stroke').where((df['age']>50) & (df['stroke']>0)).show(5)\n",
+        "df.select('age','stroke').where((df['age']>50) & (df['stroke']>0)).count()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "0cad6be7-a576-4c96-b736-e1b61fc463d5",
+      "metadata": {
+        "id": "0cad6be7-a576-4c96-b736-e1b61fc463d5"
+      },
+      "source": [
+        "# 09 - Usando spark.sql, determine qual o nível médio de glicose para pessoas que, respectivamente, sofreram e não sofreram derrame."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "84f09731-4fd8-49f3-a956-e21bc7e3cfc3",
+      "metadata": {
+        "id": "84f09731-4fd8-49f3-a956-e21bc7e3cfc3",
+        "outputId": "7793bf67-282c-40e8-ce07-4a03334d5f23"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------+-----------------------+\n",
+            "|stroke|mean(avg_glucose_level)|\n",
+            "+------+-----------------------+\n",
+            "|     1|     119.95307046938272|\n",
+            "|     0|     103.60273130214506|\n",
+            "+------+-----------------------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "spark.sql(\"SELECT stroke,MEAN(avg_glucose_level) FROM ataque GROUP BY stroke\").show()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "e2b570ee-782e-4639-b3ce-6676c13e1106",
+      "metadata": {
+        "id": "e2b570ee-782e-4639-b3ce-6676c13e1106",
+        "outputId": "2e5ea3fa-847d-4cd8-b880-c447df482763"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------+-----------+----------------------+\n",
+            "|stroke|avg(stroke)|avg(avg_glucose_level)|\n",
+            "+------+-----------+----------------------+\n",
+            "|     1|        1.0|    119.95307046938272|\n",
+            "|     0|        0.0|    103.60273130214506|\n",
+            "+------+-----------+----------------------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "#conferindo\n",
+        "df.select('stroke', 'avg_glucose_level').groupBy('stroke').avg().show()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "2ae0da8d-6a4e-4ac3-8bec-5f250aa7784f",
+      "metadata": {
+        "id": "2ae0da8d-6a4e-4ac3-8bec-5f250aa7784f"
+      },
+      "source": [
+        "# 10 - Qual é o BMI (IMC = índice de massa corpórea) médio de quem sofreu e não sofreu derrame?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "e9addc82-16f0-4c47-9bc5-d6f816a2e0a9",
+      "metadata": {
+        "id": "e9addc82-16f0-4c47-9bc5-d6f816a2e0a9",
+        "outputId": "c4292029-ff9f-4bab-d79a-a38c60afea93"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------+------------------+\n",
+            "|stroke|          avg(bmi)|\n",
+            "+------+------------------+\n",
+            "|     1|29.942490629729495|\n",
+            "|     0|27.989678933253657|\n",
+            "+------+------------------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "df.groupBy('stroke').agg(avg('bmi')).show(4)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "2b9e6319-2b75-4551-b37b-0defdd8c1b5e",
+      "metadata": {
+        "id": "2b9e6319-2b75-4551-b37b-0defdd8c1b5e"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "7833377a-9950-4875-91fd-1b44bb1d913e",
+      "metadata": {
+        "id": "7833377a-9950-4875-91fd-1b44bb1d913e"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "2bd6339e-346d-415d-8663-0b68a01645b1",
+      "metadata": {
+        "id": "2bd6339e-346d-415d-8663-0b68a01645b1"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "f88f2dbb-140e-4be3-87df-ac3f3c0ea019",
+      "metadata": {
+        "id": "f88f2dbb-140e-4be3-87df-ac3f3c0ea019"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "3dd387d1-bd2b-4d51-87ce-bb219400243c",
+      "metadata": {
+        "id": "3dd387d1-bd2b-4d51-87ce-bb219400243c"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "04884036-fe9a-4881-b6d7-1c18c41471f4",
+      "metadata": {
+        "id": "04884036-fe9a-4881-b6d7-1c18c41471f4",
+        "outputId": "cef86196-0c5c-4a69-edae-513f2aa7fb30"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------+\n",
+            "|gender|\n",
+            "+------+\n",
+            "|Female|\n",
+            "| Other|\n",
+            "|  Male|\n",
+            "+------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "#verificando quantos tipos de generos existem.\n",
+        "df.select('gender').distinct().show()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "6974fa5c-6df7-4c31-b90a-28a2a09c147a",
+      "metadata": {
+        "id": "6974fa5c-6df7-4c31-b90a-28a2a09c147a"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "4b0fadc7-e0f5-4d6d-b4b4-f63209d7f6a6",
+      "metadata": {
+        "id": "4b0fadc7-e0f5-4d6d-b4b4-f63209d7f6a6",
+        "outputId": "8c1ca563-398b-4573-bc95-3a25ded88170"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+---+---+---+---+\n",
+            "|  0|s_f|s_m|s_o|\n",
+            "+---+---+---+---+\n",
+            "|  1|  1|  0|  0|\n",
+            "|  2|  0|  1|  0|\n",
+            "|  3|  1|  0|  0|\n",
+            "|  4|  1|  0|  0|\n",
+            "+---+---+---+---+\n",
+            "only showing top 4 rows\n",
+            "\n"
+          ]
+        },
+        {
+          "data": {
+            "text/plain": [
+              "67135"
+            ]
+          },
+          "execution_count": 22,
+          "metadata": {},
+          "output_type": "execute_result"
+        }
+      ],
+      "source": [
+        "#definindo Tabela do genero de acoro com id\n",
+        "df_gender = df.groupBy('0').pivot('gender').count().sort('0').fillna(0).withColumnsRenamed({'Female':'s_f','Male':'s_m','Other':'s_o' })\n",
+        "df_gender.show(4)\n",
+        "df_gender.count()\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "67aaaae1-b220-4a05-a887-f3a87e6d75d5",
+      "metadata": {
+        "id": "67aaaae1-b220-4a05-a887-f3a87e6d75d5",
+        "outputId": "84f5d601-40bc-406f-a2fa-4404d89a9633"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------------+\n",
+            "|ever_married|\n",
+            "+------------+\n",
+            "|          No|\n",
+            "|         Yes|\n",
+            "+------------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "#verificarndo qunatos tipos de ever_married existem\n",
+        "df.select('ever_married').distinct().show()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "52a467fd-1fc4-4cea-b566-68f855475977",
+      "metadata": {
+        "id": "52a467fd-1fc4-4cea-b566-68f855475977",
+        "outputId": "2e1c23f5-cef9-432c-9bb0-4ec082b32f6c"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+---+--------+---------+\n",
+            "|  0|marri_no|marri_yes|\n",
+            "+---+--------+---------+\n",
+            "|  1|       1|        0|\n",
+            "|  2|       0|        1|\n",
+            "|  3|       0|        1|\n",
+            "|  4|       0|        1|\n",
+            "+---+--------+---------+\n",
+            "only showing top 4 rows\n",
+            "\n"
+          ]
+        },
+        {
+          "data": {
+            "text/plain": [
+              "67135"
+            ]
+          },
+          "execution_count": 24,
+          "metadata": {},
+          "output_type": "execute_result"
+        }
+      ],
+      "source": [
+        "#definindo tabela de contingencia para ever_married\n",
+        "df_ever_married = df.groupBy('0').pivot('ever_married').count().sort('0').withColumnRenamed('No','marri_no').withColumnRenamed('Yes','marri_yes').fillna(0)\n",
+        "df_ever_married.show(4)\n",
+        "df_ever_married.count()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "eef4cc04-ce9d-4a7c-990c-535ba014a96e",
+      "metadata": {
+        "id": "eef4cc04-ce9d-4a7c-990c-535ba014a96e",
+        "outputId": "cc58e884-a2bc-4222-abd0-ec3abcf80c02"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+-------------+\n",
+            "|    work_type|\n",
+            "+-------------+\n",
+            "| Never_worked|\n",
+            "|Self-employed|\n",
+            "|      Private|\n",
+            "|     children|\n",
+            "|     Govt_job|\n",
+            "+-------------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "#verificarndo qunatos tipos de work_type existem\n",
+        "df.select('work_type').distinct().show()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "517f509d-e256-4a23-8702-32265eab70d4",
+      "metadata": {
+        "id": "517f509d-e256-4a23-8702-32265eab70d4",
+        "outputId": "5613f80b-e33c-4244-e2ea-e7ec078747ae"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+---+--------+------------+----------+-------------+-----------+\n",
+            "|  0|Govt_job|Never_worked|wt_Private|Self-employed|wt_children|\n",
+            "+---+--------+------------+----------+-------------+-----------+\n",
+            "|  1|       0|           0|         1|            0|          0|\n",
+            "|  2|       0|           0|         1|            0|          0|\n",
+            "|  3|       1|           0|         0|            0|          0|\n",
+            "|  4|       0|           0|         0|            1|          0|\n",
+            "+---+--------+------------+----------+-------------+-----------+\n",
+            "only showing top 4 rows\n",
+            "\n"
+          ]
+        },
+        {
+          "data": {
+            "text/plain": [
+              "67135"
+            ]
+          },
+          "execution_count": 26,
+          "metadata": {},
+          "output_type": "execute_result"
+        }
+      ],
+      "source": [
+        "#definindo tabela de contingencia para work_type\n",
+        "df_work_type = df.groupBy('0').pivot('work_type').count().sort('0').fillna(0)\n",
+        "df_work_type =  df_work_type.withColumnRenamed('Private','wt_Private').withColumnRenamed('children','wt_children')\n",
+        "df_work_type.show(4)\n",
+        "df_work_type.count()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "eb6d1a28-5f2b-428e-b912-0c7a60b38327",
+      "metadata": {
+        "id": "eb6d1a28-5f2b-428e-b912-0c7a60b38327",
+        "outputId": "cd9b6dc4-f55a-4a56-9129-b0f9093e7899"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+--------------+\n",
+            "|Residence_type|\n",
+            "+--------------+\n",
+            "|         Urban|\n",
+            "|         Rural|\n",
+            "+--------------+\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "#verificarndo qunatos tipos de Residence_type existem\n",
+        "df.select('Residence_type').distinct().show()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "af3d2c04-50a7-4f9a-86ca-3c35e7dc19e7",
+      "metadata": {
+        "id": "af3d2c04-50a7-4f9a-86ca-3c35e7dc19e7",
+        "outputId": "41c6bf6e-2083-4361-b8ed-26f57891f0d5"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+---+--------+--------+\n",
+            "|  0|rt_Rural|rt_Urban|\n",
+            "+---+--------+--------+\n",
+            "|  1|       0|       1|\n",
+            "|  2|       1|       0|\n",
+            "|  3|       0|       1|\n",
+            "|  4|       1|       0|\n",
+            "+---+--------+--------+\n",
+            "only showing top 4 rows\n",
+            "\n"
+          ]
+        },
+        {
+          "data": {
+            "text/plain": [
+              "67135"
+            ]
+          },
+          "execution_count": 28,
+          "metadata": {},
+          "output_type": "execute_result"
+        }
+      ],
+      "source": [
+        "#definindo tabela de contingencia para Residence_type\n",
+        "df_Residence_type = df.groupBy('0').pivot('Residence_type').count().withColumnsRenamed({'Rural':'rt_Rural','Urban':'rt_Urban'}).fillna(0).sort('0')\n",
+        "df_Residence_type.show(4)\n",
+        "df_Residence_type.count()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "528e98cf-555c-4d0a-9c25-4c37832de557",
+      "metadata": {
+        "id": "528e98cf-555c-4d0a-9c25-4c37832de557",
+        "outputId": "8ee0d16d-431e-4e2b-ad33-3e28799aafc7"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+---------------+\n",
+            "| smoking_status|\n",
+            "+---------------+\n",
+            "|         smokes|\n",
+            "|   never_smoked|\n",
+            "|formerly smoked|\n",
+            "+---------------+\n",
+            "\n",
+            "+---+--------+--------+------+\n",
+            "|  0|f_smoked|n_smoked|smokes|\n",
+            "+---+--------+--------+------+\n",
+            "|  1|       0|       0|     1|\n",
+            "|  2|       0|       1|     0|\n",
+            "|  3|       0|       0|     1|\n",
+            "|  4|       1|       0|     0|\n",
+            "+---+--------+--------+------+\n",
+            "only showing top 4 rows\n",
+            "\n"
+          ]
+        },
+        {
+          "data": {
+            "text/plain": [
+              "67135"
+            ]
+          },
+          "execution_count": 29,
+          "metadata": {},
+          "output_type": "execute_result"
+        }
+      ],
+      "source": [
+        "#verificarndo qunatos tipos de smoking_status existem\n",
+        "df.select('smoking_status').distinct().show()\n",
+        "#definindo tabela de contingencia para smoking_status\n",
+        "df_smoking_status = df.groupBy('0').pivot('smoking_status').count().fillna(0).withColumnsRenamed({'formerly smoked':'f_smoked', 'never_smoked':'n_smoked'}).sort('0')\n",
+        "df_smoking_status.show(4)\n",
+        "df_smoking_status.count()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "42e7830a-d57f-4cb4-b713-ac5760ff9123",
+      "metadata": {
+        "id": "42e7830a-d57f-4cb4-b713-ac5760ff9123",
+        "outputId": "ca2c0ceb-9706-4169-ac56-ab7d75800c64"
+      },
+      "outputs": [
+        {
+          "data": {
+            "text/plain": [
+              "67135"
+            ]
+          },
+          "execution_count": 30,
+          "metadata": {},
+          "output_type": "execute_result"
+        }
+      ],
+      "source": [
+        "#unindo todas as tabelas gender,ever_married, work_type,Residence_type,smoking_status\n",
+        "df_final = df.join(df_gender,df['0']==df_gender['0'], 'inner').drop(df_gender['0']).drop('gender')\\\n",
+        ".join(df_ever_married,df['0']==df_ever_married['0'], 'inner').drop(df_ever_married['0']).drop('ever_married')\\\n",
+        ".join(df_work_type,df['0']==df_work_type['0'], 'inner').drop(df_work_type['0']).drop('work_type')\\\n",
+        ".join(df_Residence_type,df['0']==df_Residence_type['0'], 'inner').drop(df_Residence_type['0']).drop('Residence_type')\\\n",
+        ".join(df_smoking_status,df['0']==df_smoking_status['0'], 'inner').drop(df_smoking_status['0']).drop('smoking_status')\n",
+        "\n",
+        "df_final.count()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "04739d22-8ef1-4c81-b69d-5bcb8f543cd1",
+      "metadata": {
+        "id": "04739d22-8ef1-4c81-b69d-5bcb8f543cd1"
+      },
+      "source": [
+        "# 11 - Crie um modelo de árvore de decisão que prevê a chance de derrame (stroke) a partir das variáveis contínuas/categóricas: idade, BMI, hipertensão, doença do coração, nível médio de glicose. Use o conteúdo da segunda aula interativa para criar e avaliar o modelo."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "5aebdfcf-66b7-4ddf-babc-f7edae5bf837",
+      "metadata": {
+        "id": "5aebdfcf-66b7-4ddf-babc-f7edae5bf837",
+        "outputId": "0e0ed126-67a7-4fbc-cd83-4ea1a17a5ff2"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------+----------------------+\n",
+            "|stroke|features              |\n",
+            "+------+----------------------+\n",
+            "|1     |[18.0,12.12,0.0,94.19]|\n",
+            "|0     |[58.0,33.7,1.0,154.24]|\n",
+            "|0     |[36.0,24.7,0.0,72.63] |\n",
+            "|0     |[62.0,31.2,0.0,85.52] |\n",
+            "+------+----------------------+\n",
+            "only showing top 4 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "from pyspark.ml.feature import VectorAssembler\n",
+        "from pyspark.ml.classification import DecisionTreeClassifier\n",
+        "from pyspark.ml.evaluation import MulticlassClassificationEvaluator\n",
+        "\n",
+        "v_considerados = ['age','bmi' ,'hypertension', 'avg_glucose_level']\n",
+        "vetor_features = VectorAssembler(inputCols=v_considerados,outputCol='features')\n",
+        "df_dtc_01 = vetor_features.transform(df).select('stroke', 'features')\n",
+        "df_dtc_01.show(4,truncate=False)\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "a961a88f-6f1e-464a-974d-5dc379a62606",
+      "metadata": {
+        "id": "a961a88f-6f1e-464a-974d-5dc379a62606",
+        "outputId": "062e53ad-247d-4d72-f584-07b451bd9c02"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "46818\n",
+            "20317\n"
+          ]
+        }
+      ],
+      "source": [
+        "#dividir dados\n",
+        "df_dtc_01_treino , df_dtc_01_teste = df_dtc_01.randomSplit([0.7,0.3])\n",
+        "print(df_dtc_01_treino.count())\n",
+        "print(df_dtc_01_teste.count())"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "be582362-67a2-4d53-9366-6a43d0292d90",
+      "metadata": {
+        "id": "be582362-67a2-4d53-9366-6a43d0292d90",
+        "outputId": "bd8eb20f-f32b-45f6-e2aa-016c0f3bee95"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------+--------------------+--------------+--------------------+----------+\n",
+            "|stroke|            features| rawPrediction|         probability|prediction|\n",
+            "+------+--------------------+--------------+--------------------+----------+\n",
+            "|     0|[0.08,12.9,0.0,70.3]|[3698.0,282.0]|[0.92914572864321...|       0.0|\n",
+            "|     0|[0.08,13.1,0.0,93...|[3698.0,282.0]|[0.92914572864321...|       0.0|\n",
+            "|     0|[0.08,14.6,0.0,12...|[3698.0,282.0]|[0.92914572864321...|       0.0|\n",
+            "|     0|[0.16,13.0,0.0,69...|[3698.0,282.0]|[0.92914572864321...|       0.0|\n",
+            "+------+--------------------+--------------+--------------------+----------+\n",
+            "only showing top 4 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "dtc_model = DecisionTreeClassifier(labelCol='stroke',featuresCol='features')\n",
+        "dct = dtc_model.fit(df_dtc_01_treino)\n",
+        "#prevendo o modelo\n",
+        "df_dtc_01_teste_pred = dct.transform(df_dtc_01_teste)\n",
+        "df_dtc_01_teste_pred.show(4)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "a31136ea-359a-41a4-a1a4-3c542cf57617",
+      "metadata": {
+        "id": "a31136ea-359a-41a4-a1a4-3c542cf57617",
+        "outputId": "d59de7ef-8791-4513-c257-2f9557f04f59"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "0.6947876162819314\n"
+          ]
+        }
+      ],
+      "source": [
+        "#avaliando o modelo\n",
+        "avaliador = MulticlassClassificationEvaluator(metricName= 'accuracy', labelCol='stroke', predictionCol=\"prediction\")\n",
+        "print(avaliador.evaluate(df_dtc_01_teste_pred))"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "f775e844-f9c7-44a1-865c-ea62d00ff750",
+      "metadata": {
+        "id": "f775e844-f9c7-44a1-865c-ea62d00ff750"
+      },
+      "source": [
+        "# 12 - Adicione ao modelo as variáveis categóricas: gênero e status de fumante. Use o conteúdo da aula interativa para lidar com as variáveis categóricas.  A acurácia (qualidade) do modelo aumentou para:\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "4df0c174-75f5-458b-82ae-11076e4ff614",
+      "metadata": {
+        "id": "4df0c174-75f5-458b-82ae-11076e4ff614",
+        "outputId": "e4e764a9-ee9f-4023-c384-d11205853795"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------+----+----+------------+-----------------+---+---+---+--------+--------+------+\n",
+            "|stroke| age| bmi|hypertension|avg_glucose_level|s_f|s_m|s_o|f_smoked|n_smoked|smokes|\n",
+            "+------+----+----+------------+-----------------+---+---+---+--------+--------+------+\n",
+            "|     1|79.0|34.3|           0|            86.48|  0|  1|  0|       1|       0|     0|\n",
+            "|     1|78.0|38.1|           1|           221.43|  1|  0|  0|       1|       0|     0|\n",
+            "|     0|29.0|25.2|           0|            106.9|  1|  0|  0|       1|       0|     0|\n",
+            "|     1|60.0|32.7|           0|           209.44|  1|  0|  0|       0|       0|     1|\n",
+            "|     0|72.0|24.6|           0|            92.66|  0|  1|  0|       0|       1|     0|\n",
+            "+------+----+----+------------+-----------------+---+---+---+--------+--------+------+\n",
+            "only showing top 5 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "df_final.select(['stroke','age','bmi' ,'hypertension', 'avg_glucose_level','s_f','s_m','s_o','f_smoked','n_smoked', 'smokes']).show(5)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "fa322e73-87b9-4b45-a849-7e6e2dd0a0d9",
+      "metadata": {
+        "id": "fa322e73-87b9-4b45-a849-7e6e2dd0a0d9",
+        "outputId": "89c7a85b-4293-465b-f357-2abb4a1a3adf"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------+----------------------------------------------+\n",
+            "|stroke|features                                      |\n",
+            "+------+----------------------------------------------+\n",
+            "|1     |(10,[0,1,3,5,7],[79.0,34.3,86.48,1.0,1.0])    |\n",
+            "|1     |[78.0,38.1,1.0,221.43,1.0,0.0,0.0,1.0,0.0,0.0]|\n",
+            "|0     |(10,[0,1,3,4,7],[29.0,25.2,106.9,1.0,1.0])    |\n",
+            "|1     |(10,[0,1,3,4,9],[60.0,32.7,209.44,1.0,1.0])   |\n",
+            "+------+----------------------------------------------+\n",
+            "only showing top 4 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "v_considerados_2 = ['age','bmi' ,'hypertension', 'avg_glucose_level','s_f','s_m','s_o','f_smoked','n_smoked', 'smokes']\n",
+        "vetor_features = VectorAssembler(inputCols=v_considerados_2,outputCol='features')\n",
+        "df_dtc_02 = vetor_features.transform(df_final).select('stroke', 'features')\n",
+        "df_dtc_02.show(4,truncate=False)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "fb5a5a4f-57d9-4e75-b638-a389baa8fba5",
+      "metadata": {
+        "id": "fb5a5a4f-57d9-4e75-b638-a389baa8fba5",
+        "outputId": "3928c0a4-b1a0-4b9f-80d2-92bb8c370e5d"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "46974\n",
+            "20161\n"
+          ]
+        }
+      ],
+      "source": [
+        "#dividir dados\n",
+        "df_dtc_02_treino , df_dtc_02_teste = df_dtc_02.randomSplit([0.7,0.3])\n",
+        "print(df_dtc_02_treino.count())\n",
+        "print(df_dtc_02_teste.count())"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "894c0035-e9db-4fad-9bb9-b298f646997e",
+      "metadata": {
+        "id": "894c0035-e9db-4fad-9bb9-b298f646997e"
+      },
+      "outputs": [],
+      "source": [
+        "dct_2 = dtc_model.fit(df_dtc_02_treino)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "d4861b49-6d0e-4b6e-91e1-744bbf31f696",
+      "metadata": {
+        "id": "d4861b49-6d0e-4b6e-91e1-744bbf31f696",
+        "outputId": "5a97918c-ed94-4974-d3df-8b3c3640c9bc"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "+------+--------------------+--------------+--------------------+----------+\n",
+            "|stroke|            features| rawPrediction|         probability|prediction|\n",
+            "+------+--------------------+--------------+--------------------+----------+\n",
+            "|     0|(10,[0,1,3,4,7],[...|[1232.0,306.0]|[0.80104031209362...|       0.0|\n",
+            "|     0|(10,[0,1,3,4,7],[...|[1232.0,306.0]|[0.80104031209362...|       0.0|\n",
+            "|     0|(10,[0,1,3,4,7],[...|[1232.0,306.0]|[0.80104031209362...|       0.0|\n",
+            "|     0|(10,[0,1,3,4,7],[...|[1232.0,306.0]|[0.80104031209362...|       0.0|\n",
+            "+------+--------------------+--------------+--------------------+----------+\n",
+            "only showing top 4 rows\n",
+            "\n"
+          ]
+        }
+      ],
+      "source": [
+        "#prevendo o modelo\n",
+        "df_dtc_02_teste_pred = dct_2.transform(df_dtc_02_teste)\n",
+        "df_dtc_02_teste_pred.show(4)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "33eeec49-ca07-440c-bbdc-f8e4cd10a49e",
+      "metadata": {
+        "id": "33eeec49-ca07-440c-bbdc-f8e4cd10a49e",
+        "outputId": "fd522b4a-a7b2-4090-a4e8-66aef791aaf9"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "0.8349784236893011\n"
+          ]
+        }
+      ],
+      "source": [
+        "#avaliando o modelo\n",
+        "avaliador = MulticlassClassificationEvaluator(metricName= 'accuracy', labelCol='stroke', predictionCol=\"prediction\")\n",
+        "print(avaliador.evaluate(df_dtc_02_teste_pred))"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "54616f0a-a682-4404-8259-d202825266b9",
+      "metadata": {
+        "id": "54616f0a-a682-4404-8259-d202825266b9"
+      },
+      "source": [
+        "# 13 - ((errado))"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "ef7a29dc-0acc-48f9-b73b-581cc45b8713",
+      "metadata": {
+        "id": "ef7a29dc-0acc-48f9-b73b-581cc45b8713",
+        "outputId": "dc54675f-a88a-4c38-b26c-6c34956e7c61"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "Model importances: 10\n",
+            "Model importances: (10,[0,1,3,7,8],[0.16367810943709607,0.012904377970408712,0.008312195124502925,0.07995506270613804,0.7351502547618542])\n"
+          ]
+        }
+      ],
+      "source": [
+        "print(f'Model importances: {dct_2.numFeatures}')\n",
+        "print(f'Model importances: {dct_2.featureImportances}')"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "7ef2b6a3-3770-4b43-9cc8-a8cfcdecbe4d",
+      "metadata": {
+        "id": "7ef2b6a3-3770-4b43-9cc8-a8cfcdecbe4d"
+      },
+      "source": [
+        "# 14 - Adicione ao modelo as variáveis categóricas: gênero e status de fumante. Use o conteúdo da aula interativa para lidar com as variáveis categóricas. Qual a profundidade da árvore de decisão?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "c4aaa8fb-ca64-4ded-8333-1484aa38adbb",
+      "metadata": {
+        "id": "c4aaa8fb-ca64-4ded-8333-1484aa38adbb",
+        "outputId": "26ce70ed-fd34-43a1-b4c6-7c6687376a80"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "Profundidade do modelo: 5\n"
+          ]
+        }
+      ],
+      "source": [
+        "print(f'Profundidade do modelo: {dct_2.depth}')"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "b386c2a8-98e1-4346-93e3-236336cce35d",
+      "metadata": {
+        "id": "b386c2a8-98e1-4346-93e3-236336cce35d"
+      },
+      "source": [
+        "# 15 - Quantos nodos a árvore de decisão possui?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "8e8ebf68-3252-4fba-a122-0988857356c2",
+      "metadata": {
+        "id": "8e8ebf68-3252-4fba-a122-0988857356c2",
+        "outputId": "44821eb2-3829-4ecb-d27e-84c6fcbb0206"
+      },
+      "outputs": [
+        {
+          "name": "stdout",
+          "output_type": "stream",
+          "text": [
+            "Profundidade do modelo: 21\n"
+          ]
+        }
+      ],
+      "source": [
+        "print(f'Profundidade do modelo: {dct_2.numNodes}')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "c91eb1a1-907b-41e6-934a-c4d9cd5bddab",
+      "metadata": {
+        "id": "c91eb1a1-907b-41e6-934a-c4d9cd5bddab"
+      },
+      "outputs": [],
+      "source": []
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3 (ipykernel)",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.11.6"
+    },
+    "colab": {
+      "provenance": [],
+      "include_colab_link": true
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 5
+}
